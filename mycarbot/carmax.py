@@ -105,7 +105,7 @@ def scrape(make='subaru', model='forester', zipcode=80247, distance='nationwide'
             if item.text == 'Nationwide':
                 item.click()
 
-    # load all results (this can be done better for sure)
+    # load all results
     try:
         element = WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.XPATH, "//*[contains(text(), 'See More Matches')]"))
