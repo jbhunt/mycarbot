@@ -1,7 +1,17 @@
-import bs4
-import requests
+import re
+import numpy as np
+from selenium import webdriver as swd
+from . import HeadlessChromeDriver
+from . import wait_for_element
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
-class CarvanaVehicle(object):
+# constants
+CHROMEDRIVERPATH = '/usr/bin/chromedriver'
+
+class CarvanaVehicle():
     """
     """
 
@@ -9,20 +19,29 @@ class CarvanaVehicle(object):
         """
         """
 
-        super().__init__()
-
-        # internal property values
-        self._link = f"https://www.carvana.com{tag.a.attrs['href']}"
-        self._year, self._make = tag.find(attrs={'data-qa':'result-tile-make'}).text.split(' ')
-        self._model = tag.find(attrs={'data-qa':'result-tile-model'}).text
-        self._price = int(tag.find(attrs={'data-qa':'vehicle-price'}).text.strip(' miles').replace(',',''))
-        self._mileage = int(tag.find(attrs={'data-qa':'vehicle-mileage'}).text.strip(' miles').replace(',',''))
+        info = tag.find_element_by_xpath('//div[@data-test="MakeModel"]')
+        make_and_year, model = info.text.split('\n')
+        year, make = make_and_year.split()
+        self._year = int(year)
+        self._make = make
+        self._model = model
+        self._price = int(
+            tag.find_element_by_xpath('//div[@data-test="Price"]').text.strip('$').replace(',', '')
+        )
+        self._trim = tag.find_element_by_xpath('//div[@data-test="TrimMileage"]/div[@class="trim"]').text
+        self._mileage = int(
+            tag.find_element_by_xpath('//div[@data-test="TrimMileage"]/div[@class="mileage"]').text.rstrip(' miles').replace(',', '')
+        )
 
         return
 
     @property
     def link(self):
         return self._link
+
+    @property
+    def trim(self):
+        return self._trim
 
     @property
     def make(self):
@@ -44,7 +63,17 @@ class CarvanaVehicle(object):
     def mileage(self):
         return self._mileage
 
-def scrape(make='subaru', model='forester', year=None, price=None, mileage=None):
+def set_location(driver, zipcode):
+    """
+    """
+
+
+
+    location = location_button.text
+
+    return location
+
+def scrape(make='subaru', model='forester', year=None, price=None, mileage=None, zipcode=67005, headless=False):
     """
     search for a specific car by make, model, year, price, and mileage
 
@@ -60,6 +89,8 @@ def scrape(make='subaru', model='forester', year=None, price=None, mileage=None)
         the price range
     mileage : None or tuple
         the range of mileage
+    headless:
+        flag which specifies whether to run the driver as headless (no window)
 
     returns
     -------
@@ -67,82 +98,88 @@ def scrape(make='subaru', model='forester', year=None, price=None, mileage=None)
         list of vehicle objects
     """
 
-    #test
-
-    # check the type
-
+    #
+    if headless:
+        driver = HeadlessChromeDriver()
+    else:
+        driver = swd.Chrome('/usr/bin/chromedriver')
 
     # start on page 1
     ipage = 1
 
-    # list of cars
+    # initialize and empty list of cars
     cars = list()
+
+    # set the location
+    driver.get('https://www.carvana.com/cars')
+    location_button = driver.find_element_by_xpath(
+        '//button[@data-cv-test="geolocation-button"]'
+    )
+    location_button.click()
+    result, box = wait_for_element(driver, '//input[@name="ZIP CODE"]')
+    if not result:
+        raise ScrapingError('Could not find the zipcode text box')
+    box.send_keys(zipcode)
+    driver.find_element_by_xpath(
+        '//button[starts-with(@class, "GeolocationModal")]'
+    ).click()
+
+    # NOTE - For some reason, the location only updates the second time
+    #        the first page is loaded so I am loading it once here.
+    url = f'https://www.carvana.com/cars/{make}-{model}?page={ipage}'
+    driver.get(url)
 
     # keep looping through pages until all entries are exhausted
     while True:
 
         # download the html
         url = f'https://www.carvana.com/cars/{make}-{model}?page={ipage}'
-        try:
-            req = requests.get(url)
-        except requests.ConnectionError as e:
-            return
-        soup = bs4.BeautifulSoup(req.content, 'html.parser')
+        driver.get(url)
 
-        # break out if the page is empty
-        res = soup.find('div', attrs={'data-qa':'title'})
-        if res is not None and res.text == 'We didn’t find any exact matches':
-            break
-
-        #
-        print(f'scrapping page {ipage} ...')
+        # check that the location is correct
+        location = driver.find_element_by_xpath(
+            '//button[@data-cv-test="geolocation-button"]'
+        ).text
 
         # collect all tiles
-        tiles = soup.find_all(attrs={'data-qa':'result-tile'})
+        tiles = driver.find_elements_by_xpath('//article[@class="result-tile"]')
+        if len(tiles) == 0:
+            break
 
         # extract the each entry
         for tag in tiles:
 
-            # these are ads
-            if tag.a.attrs['data-qa'] == 'styled-link':
-                continue
+            # init the vehicle object
+            car = CarvanaVehicle(tag)
 
-            # these are real vehicle entries
-            elif tag.a.attrs['data-qa'] == 'vehicle-link':
+            # filtering
 
-                # init the vehicle object
-                car = CarvanaVehicle(tag)
-
-                # filtering
-
-                # by year
-                if year != None:
-                    if type(year) in [list, tuple]:
-                        if year[0] <= car.year <= year[1]:
-                            cars.append(car)
-                    else:
-                        if car.year == year:
-                            cars.append(car)
-
-                # by price
-                if price != None:
-                    if price[0] <= car.price <= price[1]:
+            # by year
+            if year != None:
+                if type(year) in [list, tuple]:
+                    if year[0] <= car.year <= year[1]:
+                        cars.append(car)
+                else:
+                    if car.year == year:
                         cars.append(car)
 
-                # by mileage
-                if mileage != None:
-                    if mileage[0] <= car.mileage <= mileage[1]:
-                        cars.append(car)
-
-                # no filters
-                if year is None and price is None and mileage is None:
+            # by price
+            if price != None:
+                if price[0] <= car.price <= price[1]:
                     cars.append(car)
 
-            # unidentified case
-            else:
-                continue
+            # by mileage
+            if mileage != None:
+                if mileage[0] <= car.mileage <= mileage[1]:
+                    cars.append(car)
+
+            # no filters
+            if year is None and price is None and mileage is None:
+                cars.append(car)
 
         # increment the page number
         ipage += 1
+
+    driver.close()
 
     return cars
