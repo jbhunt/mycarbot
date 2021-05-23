@@ -1,6 +1,29 @@
 from selenium import webdriver as swd
 from selenium.webdriver.chrome.options import Options
 from fake_useragent import UserAgent
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+
+def wait_for_element(driver, pattern, timeout=5):
+    """
+    """
+
+    try:
+        element = WebDriverWait(driver, timeout).until(
+            EC.presence_of_element_located((By.XPATH, pattern))
+        )
+    except TimeoutException:
+        return False, None
+
+    return True, element
+
+def filter_car_list(**filters):
+    """
+    """
+
+    return
 
 class ScrapingError(Exception):
     def __init__(self, message):
