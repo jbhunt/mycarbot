@@ -62,6 +62,15 @@ class CarmaxVehicle(object):
     def mileage(self):
         return self._mileage
 
+def set_home_store(driver, zipcode=80247):
+    """
+    set the home store location (nearest to the target zipcode)
+    """
+
+    driver.get(f'https://www.carmax.com/stores/search?keyword={zipcode}')
+
+    return
+
 def scrape(make='subaru', model='forester', zipcode=80247, distance='nationwide', year=(2016,2018), price=None, mileage=None):
     """
     """
