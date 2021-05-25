@@ -27,4 +27,5 @@ Dependencies
 2. ChromeDriver
 3. Selenium
 4. fake_useragent
+
 I used [this guide](https://tecadmin.net/setup-selenium-chromedriver-on-ubuntu/)(steps 1 and 2) to install Chrome, ChromeDriver, and the Selenium Python bindings on Ubuntu 18.04.
