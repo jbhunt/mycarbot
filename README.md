@@ -22,10 +22,10 @@ If you want to run the webdriver headless (i.e., no window), you can set the `he
 cars = scrape(make='subaru', model='forester', headless=True)
 ```
 
-Dependencies
+# Dependencies
 1. Chrome
 2. ChromeDriver
 3. Selenium
-4. fake_useragent
+4. fake-useragent
 
-I used [this guide](https://tecadmin.net/setup-selenium-chromedriver-on-ubuntu/) (steps 1 and 2) to install Chrome, ChromeDriver, and the Selenium Python bindings on Ubuntu 18.04.
+I used [this guide](https://tecadmin.net/setup-selenium-chromedriver-on-ubuntu/) (steps 1 and 2) to install Chrome and ChromeDriver on Ubuntu 18.04. To install Selenium and fake_useragent you can execute `pip install selenium` and `pip install fake-useragent` in the terminal.
