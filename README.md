@@ -2,7 +2,7 @@
 This package scrapes data from used car sellers using the Python bindings for Selenium. Supported sellers include Carvana, CarMax, and www.cars.com.
 
 # Basic usage
-For each used car seller, there is a corresponding module. Each of these modules has a scrape function that is used to collect data from each seller. The first two keyword arguments specify the make and model of the target vehicle.
+For each used car seller, there is a corresponding module. Each of these modules has a `scrape` function that is used to collect data from each seller. The first two keyword arguments specify the make and model of the target vehicle.
 ```Python
 from mycarbot import carvana
 cars = carvana.scrape(make='subaru', model='forester')
@@ -21,3 +21,10 @@ If you want to run the webdriver headless (i.e., no window), you can set the `he
 ```Python
 cars = scrape(make='subaru', model='forester', headless=True)
 ```
+
+Dependencies
+1. Chrome
+2. ChromeDriver
+3. Selenium
+4. fake_useragent
+I used [this guide](https://tecadmin.net/setup-selenium-chromedriver-on-ubuntu/)(steps 1 and 2) to install Chrome, ChromeDriver, and the Selenium Python bindings on Ubuntu 18.04.
