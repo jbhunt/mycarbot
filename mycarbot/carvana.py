@@ -2,7 +2,7 @@ import re
 import numpy as np
 from selenium import webdriver as swd
 from . import HeadlessChromeDriver
-from . import wait_for_element
+from . import wait_for_element, ScrapingError
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -63,16 +63,6 @@ class CarvanaVehicle():
     def mileage(self):
         return self._mileage
 
-def set_location(driver, zipcode):
-    """
-    """
-
-
-
-    location = location_button.text
-
-    return location
-
 def scrape(make='subaru', model='forester', year=None, price=None, mileage=None, zipcode=67005, headless=False):
     """
     search for a specific car by make, model, year, price, and mileage
@@ -120,9 +110,10 @@ def scrape(make='subaru', model='forester', year=None, price=None, mileage=None,
     if not result:
         raise ScrapingError('Could not find the zipcode text box')
     box.send_keys(zipcode)
-    driver.find_element_by_xpath(
-        '//button[starts-with(@class, "GeolocationModal")]'
-    ).click()
+    result, search_button = wait_for_element(driver, '//button[@data-cv-test="Cv.Search.Geolocation.UpdateButton"]')
+    if not result:
+        raise ScrapingError('Could not find the search button')
+    search_button.click()
 
     # NOTE - For some reason, the location only updates the second time
     #        the first page is loaded so I am loading it once here.
