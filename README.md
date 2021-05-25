@@ -28,4 +28,4 @@ cars = scrape(make='subaru', model='forester', headless=True)
 3. Selenium
 4. fake-useragent
 
-I used [this guide](https://tecadmin.net/setup-selenium-chromedriver-on-ubuntu/) (steps 1 and 2) to install Chrome and ChromeDriver on Ubuntu 18.04. To install Selenium and fake_useragent you can execute `pip install selenium` and `pip install fake-useragent` in the terminal.
+I used [this guide](https://tecadmin.net/setup-selenium-chromedriver-on-ubuntu/) (steps 1 and 2) to install Chrome and ChromeDriver on Ubuntu 18.04. To install Selenium and fake-useragent you can execute `pip install selenium` and `pip install fake-useragent` in the terminal.
