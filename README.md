@@ -1,6 +1,13 @@
 # mycarbot
 This package scrapes data from used car sellers using the Python bindings for Selenium. Supported sellers include Carvana, CarMax, and www.cars.com.
 
+# Current status
+| Seller   | Status  |
+| -------- | ------- |
+| Carvana  | Working |
+| Carmax   | Broken  |
+| cars.com | Broken  |
+
 # Basic usage
 For each used car seller, there is a corresponding module. Each of these modules has a `scrape` function that is used to collect data from each seller. The first two keyword arguments specify the make and model of the target vehicle.
 ```Python
