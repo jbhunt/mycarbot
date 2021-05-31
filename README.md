@@ -7,6 +7,7 @@ This package scrapes data from used car sellers using the Python bindings for Se
 | Carvana      | Working |
 | Carmax       | Working |
 | www.cars.com | Broken  |
+
 Update on May 31, 2021.
 
 # Basic usage
