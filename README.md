@@ -5,8 +5,9 @@ This package scrapes data from used car sellers using the Python bindings for Se
 | Seller       | Status  |
 | ------------ | ------- |
 | Carvana      | Working |
-| Carmax       | Broken  |
+| Carmax       | Working |
 | www.cars.com | Broken  |
+Update on May 31, 2021.
 
 # Basic usage
 For each used car seller, there is a corresponding module. Each of these modules has a `scrape` function that is used to collect data from each seller. The first two keyword arguments specify the make and model of the target vehicle.
