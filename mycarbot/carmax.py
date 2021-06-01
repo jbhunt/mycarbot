@@ -5,19 +5,14 @@ import numpy as np
 from selenium import webdriver as swd
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from . import HeadlessChromeDriver, wait_for_element, ScrapingError
 from selenium.common.exceptions import TimeoutException
-
-# constants
-
-#
-CHROMEDRIVERPATH = '/usr/bin/chromedriver'
-
-# these are the valid distance options
-VALID_DISTANCE_OPTIONS = [
-    25, 50, 75, 100, 250, 500, 'Nationwide'
-]
+from selenium.webdriver.support import expected_conditions as EC
+from .utilities import (
+    wait_for_element,
+    click_button,
+    HeadlessChromeDriver,
+    ScrapingError
+)
 
 class CarmaxVehicle(object):
     """
@@ -72,108 +67,129 @@ class CarmaxVehicle(object):
     def mileage(self):
         return self._mileage
 
-def _set_store(driver, zipcode):
+def _update_distance(driver, target_distance):
     """
-    """
-
-    return
-
-def _set_distance(driver, target_distance):
-    """
+    this function sets the search distance to the option closest to the target
+    distance
     """
 
     #
-    distance_drawer = driver.find_element_by_xpath('//div[@class="drawer"][@id="Distance"]')
-    distance_drawer.click()
+    search_result, distance_drawer = wait_for_element(
+        driver,
+        '//div[@class="drawer"][@id="Distance"]'
+    )
+    if not search_result:
+        return False
+
+    click_result = click_button(distance_drawer)
+    if not click_result:
+        return False
 
     # wait for the drawer to expand
-    try:
-        distance_drawer_opened = WebDriverWait(driver, 15).until(
-            EC.presence_of_element_located((By.XPATH, '//div[@class="drawer expanded"][@id="Distance"]'))
-        )
-    except TimeoutException:
-        raise ScrapingError('Unable to locate the distance drawer element')
+    search_result, distance_drawer_opened = wait_for_element(
+        driver,
+        '//div[@class="drawer expanded"][@id="Distance"]'
+    )
+    if not search_result:
+        return False
+
+    # get the valid distance options
+    distance_options = np.array([
+        int(el.text.rstrip(' miles'))
+            for el in distance_drawer_opened.find_elements_by_xpath('//option[contains(text(), "miles")]')
+    ])
 
     # wait for the dropdown menu to become visible
-    try:
-        distance_dropdown = WebDriverWait(distance_drawer_opened, 15).until(
-            EC.visibility_of_element_located((By.XPATH, '//div[starts-with(@class, "kmx-menu")]'))
+    search_result, distance_dropdown = wait_for_element(
+        distance_drawer_opened,
+        '//div[starts-with(@class, "kmx-menu")]',
+        condition='visible'
         )
-    except TimeoutException:
-        raise ScrapingError('Unable to locate the distance dropdown menu element')
+    if not search_result:
+        return False
 
     # expand the distance dropdown menu
-    distance_dropdown.click()
+    click_result = click_button(distance_dropdown)
+    if not click_result:
+        return False
 
     # wait for list to expand
-    try:
-        distance_dropdown = WebDriverWait(distance_drawer_opened, 15).until(
-            EC.presence_of_element_located((By.XPATH, '//div[@class="kmx-menu kmx-menu--open"]'))
-        )
-    except TimeoutException:
-        raise ScrapingError('Unable to locate the expanded distance dropdown menu element')
+    search_result, distance_dropdown_expanded = wait_for_element(
+        distance_drawer_opened,
+        '//div[@class="kmx-menu kmx-menu--open"]',
+        condition='present'
+    )
+    if not search_result:
+        return False
 
-    # grab the list element
-    while True:
-        distance_list = [el for el in distance_dropdown.find_elements_by_tag_name('li') if 'miles' in el.text]
-        if len(distance_list) != 6:
-            continue
-        valid_distances = list()
-        for entry in distance_list:
-            result = re.findall('\d+', entry.text)
-            if len(result) != 0:
-                valid_distances.append(int(result[0]))
-        if len(valid_distances) == len(distance_list):
-            break
-
-    # reinstantiate the list of distance options
-    distance_list = distance_dropdown.find_elements_by_tag_name('li')
+    # instantiate the list of clickable distance options
+    distance_list = distance_dropdown_expanded.find_elements_by_tag_name('li')
 
     # if no target distance selected go ahead and click the Nationwide option
     if target_distance in [None, 'nationwide', 'Nationwide']:
         for entry in distance_list:
             if entry.text == 'Nationwide':
-                distance_button = WebDriverWait(distance_dropdown, 15).until(
-                    EC.element_to_be_clickable((By.XPATH, f'//button[contains(text(), "{entry.text}")]'))
-                )
-                for itry in range(5):
-                    try:
-                        distance_button.click()
-                    except:
-                        time.sleep(0.1)
+                try:
+                    distance_button = WebDriverWait(distance_dropdown, 15).until(
+                        EC.element_to_be_clickable((By.XPATH, f'//button[contains(text(), "{entry.text}")]'))
+                    )
+                except TimeoutException:
+                    return False
+                click_result = click_button(distance_button)
+                if not click_result:
+                    return False
 
     # select the valid distance closest to the target distance
     else:
-        valid_distances = np.array(valid_distances)
-        closest = valid_distances[np.argmin(abs(valid_distances - target_distance)).item()]
+        closest = distance_options[np.argmin(abs(distance_options - target_distance)).item()]
         for entry in distance_list:
             if 'miles' in entry.text:
                 distance = int(entry.text.rstrip(' miles'))
                 if distance == closest:
                     print(f'Setting distance to {distance} miles')
-                    distance_button = WebDriverWait(distance_dropdown, 15).until(
-                        EC.element_to_be_clickable((By.XPATH, f'//button[contains(text(), "{entry.text}")]'))
-                    )
-                    for itry in range(5):
-                        try:
-                            distance_button.click()
-                        except:
-                            time.sleep(0.1)
+                    try:
+                        distance_button = WebDriverWait(distance_dropdown, 15).until(
+                            EC.element_to_be_clickable((By.XPATH, f'//button[contains(text(), "{entry.text}")]'))
+                        )
+                    except TimeoutException:
+                        return False
+                    click_result = click_button(distance_button)
+                    if not click_result:
+                        return False
 
-    search_results = WebDriverWait(driver, 15).until(
-        EC.presence_of_element_located((By.XPATH, '//section[@id="search-results"][@style="overflow: hidden;"]'))
+    # wait for the new results to load
+    search_result, results_section = wait_for_element(
+        driver,
+        '//section[@id="search-results"][@style="overflow: hidden;"]',
+        condition='present',
+        attempt=15,
+        timeout=1
     )
-    while search_results.get_attribute('style') != '':
+    if not search_result:
+        return False
+
+    # the style attribute will change to an empty string when the new results are loaded
+    while results_section.get_attribute('style') != '':
         continue
 
-    return
+    return True
 
-def scrape(make='subaru', model='forester', zipcode=80247, distance=None, year=(2016,2018), price=None, mileage=None, headless=True):
+def scrape(
+    make='subaru',
+    model='forester',
+    zipcode=80247,
+    distance=None,
+    year=None,
+    price=None,
+    mileage=None,
+    headless=True
+    ):
     """
     """
 
     if headless:
-        driver = HeadlessChromeDriver()
+        raise ScrapingError('Headless mode is not supported for CarMax')
+        # driver = HeadlessChromeDriver()
     else:
         driver = swd.Chrome('/usr/bin/chromedriver')
 
@@ -192,7 +208,9 @@ def scrape(make='subaru', model='forester', zipcode=80247, distance=None, year=(
     driver.get(url)
 
     # set the distance
-    _set_distance(driver, distance)
+    update_result = _update_distance(driver, distance)
+    if not update_result:
+        raise ScrapingError('Failed to set distance')
 
     # load all results
     while True:
