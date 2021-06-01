@@ -1,15 +1,19 @@
+# absolute imports
 import re
 import numpy as np
 from selenium import webdriver as swd
-from . import HeadlessChromeDriver
-from . import wait_for_element, ScrapingError
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.support import expected_conditions as EC
 
-# constants
-CHROMEDRIVERPATH = '/usr/bin/chromedriver'
+# relative imports
+from .utilities import (
+    wait_for_element,
+    click_button,
+    HeadlessChromeDriver,
+    ScrapingError
+)
 
 class CarvanaVehicle():
     """
