@@ -11,10 +11,10 @@ This package scrapes data from used car sellers using the Python bindings for Se
 Update on May 31, 2021.
 
 # Basic usage
-For each used car seller, there is a corresponding module. Each of these modules has a `scrape` function that is used to collect data from each seller. The first two keyword arguments specify the make and model of the target vehicle.
+For each used car seller, there is a corresponding module. Each of these modules has a `scrape` function that is used to collect data from each seller. The first two keyword arguments specify the make and model of the target vehicle. You can also set you location with the `zipcode` keyword argument.
 ```Python
 from mycarbot import carvana
-cars = carvana.scrape(make='subaru', model='forester')
+cars = carvana.scrape(make='subaru', model='forester', zipcode=11111)
 for car in cars:
     print(f'{car.year}, {car.price}, {car.mileage}')
 2020, 28990, 7457
@@ -23,12 +23,12 @@ for car in cars:
 
 The `scrape` function also accepts several keyword arguments that filters the scraped data. For example, you can specify the minimum and maximum mileage.
 ```Python
-cars = carvana.scrape(make='subaru', model='forester', mileage=(0, 100000))
+cars = carvana.scrape(make='subaru', model='forester', zipcode=11111, mileage=(0, 100000))
 ``` 
 
-If you want to run the webdriver headless (i.e., no window), you can set the `headless` flag.
+If you want to run the webdriver headless (i.e., no window), you can set the `headless` flag to `True`. Running a headless webdriver is a litte more complicated. For right now, the only module that supports this feature is the `carvana` module.
 ```Python
-cars = scrape(make='subaru', model='forester', headless=True)
+cars = carvana.scrape(make='subaru', model='forester', headless=True)
 ```
 
 # Dependencies
