@@ -73,10 +73,12 @@ def _update_distance(driver, target_distance):
     distance
     """
 
+    import pdb; pdb.set_trace()
+
     #
     search_result, distance_drawer = wait_for_element(
         driver,
-        '//div[@class="drawer"][@id="Distance"]'
+        '//div[@id="Distance"]'
     )
     if not search_result:
         return False
@@ -182,7 +184,7 @@ def scrape(
     year=None,
     price=None,
     mileage=None,
-    headless=True
+    headless=False
     ):
     """
     """
